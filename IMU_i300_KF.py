@@ -10,8 +10,13 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-Q = np.identity(3, dtype=np.float64)*0.02
-R = np.identity(3, dtype=np.float64)*0.1
+g = 9.79338
+v = np.zeros(3, dtype=np.float64)
+vg = np.zeros(3, dtype=np.float64)
+pp = np.zeros(3, dtype=np.float64)
+
+Q = np.identity(3, dtype=np.float64) * 0.02
+R = np.identity(3, dtype=np.float64) * 0.1
 H = np.diag([1.0, 1.0, 0.0])
 
 A = np.identity(3, dtype=np.float64)
@@ -37,21 +42,21 @@ if __name__ == '__main__':
     data_truth = np.genfromtxt("datasets/i300/truth.nav", dtype=float)  # 将文件中数据加载到data数组里
     """[ seconds of week, Omega_x, Omega_y, Omega_z,velocity_x,velocity_y, velocity_z]"""
     print(data.shape)
+    xx = []
     yy = []
-    outputdata=[]
+    outputdata = []
     num = np.arange(0, len(data))
     x_ba_k1 = np.array([1.40664, 0.38285, 276.51564]) * np.pi / 180.0
-
-    for i in range(0, len(data)):
-    # for i in range(0, 1000):
-        try:
+    x_ba_k = x_ba_k1
+    # for i in range(0, len(data)):
+    for i in range(0, 30000):
+        if not i == 0:
             dt = data[i][0] - data[i - 1][0]
-        except:
-            print("error")
 
         GYRO = np.array([data[i][1], data[i][2], data[i][3]]).T
 
         ACC = np.array([data[i][4], data[i][5], data[i][6]])
+
         # 由角速度计算出的状态量
         G = np.array([
             [1, np.sin(x_ba_k1[1]) * np.sin(x_ba_k1[0]) / np.cos(x_ba_k1[1]),
@@ -87,15 +92,37 @@ if __name__ == '__main__':
         x_ba_k1 = x_ba_k
         # print("=============================")
         # print(x_ba_k * 57.3)
-        outputdata.append(np.concatenate((x_ba_k* 57.3%360, np.array([data_truth[i+1][8],data_truth[i+1][9],data_truth[i+1][10]]))))
+
+        R = np.array([
+            [np.cos(x_ba_k[1]) * np.cos(x_ba_k[2]),
+             np.sin(x_ba_k[0]) * np.sin(x_ba_k[1]) * np.cos(x_ba_k[2]) - np.cos(x_ba_k[0]) * np.sin(x_ba_k[2]),
+             np.cos(x_ba_k[0]) * np.sin(x_ba_k[1]) * np.cos(x_ba_k[2]) + np.sin(x_ba_k[0]) * np.sin(x_ba_k[2])],
+            [np.cos(x_ba_k[1]) * np.sin(x_ba_k[2]),
+             np.sin(x_ba_k[0]) * np.sin(x_ba_k[1]) * np.sin(x_ba_k[2]) + np.cos(x_ba_k[0]) * np.cos(x_ba_k[2]),
+             np.cos(x_ba_k[0]) * np.cos(x_ba_k[1]) * np.sin(x_ba_k[2]) - np.sin(x_ba_k[0]) * np.cos(x_ba_k[2])],
+
+            [-np.sin(x_ba_k[1]), np.sin(x_ba_k[0]) * np.cos(x_ba_k[1]), np.cos(x_ba_k[0]) * np.cos(x_ba_k[1])]
+        ])
+        v += ACC + np.array(
+            [-np.sin(x_ba_k[1]), np.sin(x_ba_k[0]) * np.cos(x_ba_k[1]), np.cos(x_ba_k[0]) * np.cos(x_ba_k[1])]) * g * dt
+
+        vg = R @ v
+        vg = vg * np.linalg.norm(v) / np.linalg.norm(vg)
+        # print(np.linalg.norm(vg),np.linalg.norm(v))
+
+        # pp += vg * dt
+
+        # outputdata.append(np.concatenate(
+        #     (x_ba_k * 57.3 % 360, np.array([data_truth[i + 1][8], data_truth[i + 1][9], data_truth[i + 1][10]]))))
         print(i)
-
-
-        # xx.append((x_ba_k[0] * 57.3))
-        yy.append((x_ba_k[2] * 57.3)%360)
-    np.savetxt("outputData/output_i300_KF_rpy.txt", outputdata, delimiter=" ")
+        #
+        xx.append(pp[0])
+        yy.append(vg[0])
+        # yy.append(x_ba_k[2]*57.3)
+    # np.savetxt("outputData/output_i300_KF_rpy.txt", outputdata, delimiter=" ")
     """[  roll_KF,pitch_KF, yaw_KF,roll_truth,pitch_truth,yaw_truth]"""
     # plt.plot(xx, color='g')
+    # plt.plot(xx,yy, color='r')
     plt.plot(yy, color='r')
     plt.show()
 

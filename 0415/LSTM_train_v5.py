@@ -48,6 +48,7 @@ if __name__ == '__main__':
         # data = np.genfromtxt("0415/data/data_v4_1.txt", dtype=float)  # 将文件中数据加载到data数组里
 
         # for i in range(10):
+
             for i in range(0,len(data) - step_time-1,9):
                 data_input.append(np.array(data[i:i + step_time, [1,2]]))
                 data_output.append(np.array(data[i + step_time][3]))
@@ -97,16 +98,17 @@ model.add(Dense(3, activation='relu'))
 model.add(Dense(1, activation='linear'))  # 输出层的单元数与形状匹配
 # # # 编译模型
 model.compile(optimizer='adam', loss='mse', metrics=['mse','mae'])
-# model.load_weights('GNSS_v4_1.keras')
+model.load_weights('Ultimate_model1.keras')
 # # # 打印模型概要
 model.summary()
 # # # 训练模型
 history = model.fit(X_train, y_train, epochs=10, batch_size=8, validation_data=(X_test, y_test), callbacks=[tb_callback])
 # model.fit(X_train, y_train, epochs=20, batch_size=32, validation_data=(X_test, y_test), callbacks=[tb_callback])
 
-
+filename='Ultimate_model2.keras'
 # # # 保存模型
-model.save('Ultimate_model0.keras')
+model.save(filename)
+print(filename)
 #
 # tensorboard --logdir Logs --host=127.0.0.1
 np.save("output/history.npy", history)  # 保存文件

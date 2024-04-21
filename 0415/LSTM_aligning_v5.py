@@ -190,8 +190,8 @@ if __name__ == '__main__':
     # print(yaw_G.shape)
 
     for i in range(1, len(yaw_G)):
-        if i == 50000:
-            yaw_G[i:] = yaw_G[i:] + 360
+        # if i == 50000:
+        #     yaw_G[i:] = yaw_G[i:] + 360
 
         if yaw_G[i] - yaw_G[i - 1] > 320:
             yaw_G[i] = yaw_G[i] - 360
